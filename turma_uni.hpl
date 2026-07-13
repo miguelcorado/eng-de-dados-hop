@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pipeline>
+  <info>
+    <capture_transform_performance>N</capture_transform_performance>
+    <transform_performance_capturing_delay>1000</transform_performance_capturing_delay>
+    <transform_performance_capturing_size_limit>100</transform_performance_capturing_size_limit>
+    <pipeline_type>Normal</pipeline_type>
+    <pipeline_status>-1</pipeline_status>
+    <parameters/>
+    <name>New pipeline</name>
+    <name_sync_with_filename>Y</name_sync_with_filename>
+    <created_user>-</created_user>
+    <modified_user>-</modified_user>
+    <created_date>2026/07/10 19:47:37.943</created_date>
+    <modified_date>2026/07/10 19:47:37.943</modified_date>
+  </info>
+  <transform>
+    <type>TableInput</type>
+    <name>Table input</name>
+    <sql>SELECT 
+    t.cod_disc AS codigo_disciplina,
+    t.ano,
+    t.semestre AS periodo,
+    u.nome AS nome_professor,
+    COUNT(c.mat_estudante) AS n_discentes,
+    COALESCE(ROUND(AVG(c.nota)::numeric, 2), 0) AS media,
+    SUM(CASE WHEN c.nota >= 5.0 THEN 1 ELSE 0 END) AS aprovados,
+    SUM(CASE WHEN c.nota &lt; 5.0 THEN 1 ELSE 0 END) AS reprovados
+FROM universidade.turma t
+LEFT JOIN universidade.leciona l ON t.id_turma = l.id_turma
+LEFT JOIN universidade.professor p ON l.mat_professor = p.mat_professor
+LEFT JOIN universidade.usuario u ON p.cpf = u.cpf
+LEFT JOIN universidade.cursa c ON t.id_turma = c.id_turma
+GROUP BY 
+    t.id_turma, t.cod_disc, t.ano, t.semestre, u.nome;</sql>
+    <limit>0</limit>
+    <execute_each_row>N</execute_each_row>
+    <variables_active>N</variables_active>
+    <connection>aws_rds_uni</connection>
+    <lookup/>
+    <sql_from_file/>
+    <distribute>Y</distribute>
+    <copies>1</copies>
+    <GUI>
+      <xloc>80</xloc>
+      <yloc>128</yloc>
+    </GUI>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <attributes/>
+  </transform>
+  <transform>
+    <type>DBLookup</type>
+    <name>Disciplina lookup</name>
+    <connection>aws_rds</connection>
+    <cache>N</cache>
+    <cache_size>0</cache_size>
+    <cache_load_all>N</cache_load_all>
+    <lookup>
+      <schema>public</schema>
+      <table>disciplina</table>
+      <key>
+        <name>codigo_disciplina</name>
+        <name2/>
+        <condition>=</condition>
+        <field>codigo</field>
+      </key>
+      <value>
+        <name>discid</name>
+        <rename>discid</rename>
+        <default/>
+        <type>Integer</type>
+        <trim_type>none</trim_type>
+      </value>
+      <value>
+        <name>departamento_responsavel</name>
+        <rename>dep_da_disciplina</rename>
+        <default/>
+        <type>String</type>
+        <trim_type>none</trim_type>
+      </value>
+      <orderby/>
+      <fail_on_multiple>N</fail_on_multiple>
+      <eat_row_on_failure>Y</eat_row_on_failure>
+    </lookup>
+    <distribute>Y</distribute>
+    <copies>1</copies>
+    <GUI>
+      <xloc>192</xloc>
+      <yloc>240</yloc>
+    </GUI>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <attributes/>
+  </transform>
+  <transform>
+    <type>DBLookup</type>
+    <name>Professor lookup</name>
+    <connection>aws_rds</connection>
+    <cache>N</cache>
+    <cache_size>0</cache_size>
+    <cache_load_all>N</cache_load_all>
+    <lookup>
+      <schema>public</schema>
+      <table>professor</table>
+      <key>
+        <name>nome_professor</name>
+        <name2/>
+        <condition>=</condition>
+        <field>nome</field>
+      </key>
+      <value>
+        <name>profid</name>
+        <rename>profid</rename>
+        <default/>
+        <type>Integer</type>
+        <trim_type>none</trim_type>
+      </value>
+      <orderby/>
+      <fail_on_multiple>N</fail_on_multiple>
+      <eat_row_on_failure>Y</eat_row_on_failure>
+    </lookup>
+    <distribute>Y</distribute>
+    <copies>1</copies>
+    <GUI>
+      <xloc>432</xloc>
+      <yloc>128</yloc>
+    </GUI>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <attributes/>
+  </transform>
+  <transform>
+    <type>DBLookup</type>
+    <name>Semestre lookup</name>
+    <connection>aws_rds</connection>
+    <cache>N</cache>
+    <cache_size>0</cache_size>
+    <cache_load_all>N</cache_load_all>
+    <lookup>
+      <schema>public</schema>
+      <table>semestre</table>
+      <key>
+        <name>ano</name>
+        <name2/>
+        <condition>=</condition>
+        <field>ano</field>
+      </key>
+      <key>
+        <name>periodo</name>
+        <name2/>
+        <condition>=</condition>
+        <field>periodo</field>
+      </key>
+      <value>
+        <name>semid</name>
+        <rename>semid</rename>
+        <default/>
+        <type>Integer</type>
+        <trim_type>none</trim_type>
+      </value>
+      <orderby/>
+      <fail_on_multiple>N</fail_on_multiple>
+      <eat_row_on_failure>Y</eat_row_on_failure>
+    </lookup>
+    <distribute>Y</distribute>
+    <copies>1</copies>
+    <GUI>
+      <xloc>608</xloc>
+      <yloc>128</yloc>
+    </GUI>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <attributes/>
+  </transform>
+  <transform>
+    <type>SelectValues</type>
+    <name>Select values</name>
+    <fields>
+      <field>
+        <name>n_discentes</name>
+        <rename/>
+        <length>-2</length>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <name>discid</name>
+        <rename/>
+        <length>-2</length>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <name>profid</name>
+        <rename/>
+        <length>-2</length>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <name>semid</name>
+        <rename/>
+        <length>-2</length>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <name>depip</name>
+        <rename/>
+        <length>-2</length>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <name>media</name>
+        <rename/>
+        <length>-2</length>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <name>aprovados</name>
+        <rename/>
+        <length>-2</length>
+        <precision>-2</precision>
+      </field>
+      <field>
+        <name>reprovados</name>
+        <rename/>
+        <length>-2</length>
+        <precision>-2</precision>
+      </field>
+      <select_unspecified>N</select_unspecified>
+    </fields>
+    <distribute>Y</distribute>
+    <copies>1</copies>
+    <GUI>
+      <xloc>608</xloc>
+      <yloc>272</yloc>
+    </GUI>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <attributes/>
+  </transform>
+  <transform>
+    <type>TableOutput</type>
+    <name>Table output</name>
+    <connection>aws_rds</connection>
+    <schema>public</schema>
+    <table>turma</table>
+    <commit>1000</commit>
+    <truncate>N</truncate>
+    <only_when_have_rows>N</only_when_have_rows>
+    <ignore_errors>N</ignore_errors>
+    <use_batch>Y</use_batch>
+    <partitioning_enabled>N</partitioning_enabled>
+    <partitioning_field/>
+    <partitioning_daily>N</partitioning_daily>
+    <partitioning_monthly>Y</partitioning_monthly>
+    <tablename_in_field>N</tablename_in_field>
+    <tablename_field/>
+    <tablename_in_table>Y</tablename_in_table>
+    <return_keys>N</return_keys>
+    <return_field/>
+    <specify_fields>Y</specify_fields>
+    <auto_update_table_structure>N</auto_update_table_structure>
+    <always_drop_and_recreate>N</always_drop_and_recreate>
+    <add_columns>N</add_columns>
+    <drop_columns>N</drop_columns>
+    <change_column_types>N</change_column_types>
+    <fields>
+      <field>
+        <stream_name>n_discentes</stream_name>
+        <column_name>n_discentes</column_name>
+      </field>
+      <field>
+        <stream_name>discid</stream_name>
+        <column_name>disciplina_discid</column_name>
+      </field>
+      <field>
+        <stream_name>profid</stream_name>
+        <column_name>professor_profid</column_name>
+      </field>
+      <field>
+        <stream_name>semid</stream_name>
+        <column_name>semestre_semid</column_name>
+      </field>
+      <field>
+        <stream_name>depip</stream_name>
+        <column_name>depip</column_name>
+      </field>
+      <field>
+        <stream_name>media</stream_name>
+        <column_name>media</column_name>
+      </field>
+      <field>
+        <stream_name>aprovados</stream_name>
+        <column_name>aprovados</column_name>
+      </field>
+      <field>
+        <stream_name>reprovados</stream_name>
+        <column_name>reprovados</column_name>
+      </field>
+    </fields>
+    <distribute>Y</distribute>
+    <copies>1</copies>
+    <GUI>
+      <xloc>464</xloc>
+      <yloc>272</yloc>
+    </GUI>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <attributes/>
+  </transform>
+  <transform>
+    <type>DBLookup</type>
+    <name>Database lookup</name>
+    <connection>aws_rds</connection>
+    <cache>N</cache>
+    <cache_size>0</cache_size>
+    <cache_load_all>N</cache_load_all>
+    <lookup>
+      <schema>"public"</schema>
+      <table>departamento</table>
+      <key>
+        <name>dep_da_disciplina</name>
+        <name2/>
+        <condition>=</condition>
+        <field>codigo</field>
+      </key>
+      <value>
+        <name>depip</name>
+        <rename>depip</rename>
+        <default/>
+        <type>Integer</type>
+        <trim_type>none</trim_type>
+      </value>
+      <orderby/>
+      <fail_on_multiple>N</fail_on_multiple>
+      <eat_row_on_failure>Y</eat_row_on_failure>
+    </lookup>
+    <distribute>Y</distribute>
+    <copies>1</copies>
+    <GUI>
+      <xloc>256</xloc>
+      <yloc>96</yloc>
+    </GUI>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <attributes/>
+  </transform>
+  <order>
+    <hop>
+      <from>Semestre lookup</from>
+      <to>Select values</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Select values</from>
+      <to>Table output</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Professor lookup</from>
+      <to>Semestre lookup</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Table input</from>
+      <to>Disciplina lookup</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Disciplina lookup</from>
+      <to>Database lookup</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Database lookup</from>
+      <to>Professor lookup</to>
+      <enabled>Y</enabled>
+    </hop>
+  </order>
+  <notepads/>
+  <attributes/>
+  <transform_error_handling/>
+</pipeline>
